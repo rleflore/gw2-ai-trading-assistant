@@ -2,24 +2,73 @@
 
 An AI-powered trading signal generator for Guild Wars 2's Trading Post. Uses local LLMs with RAG (Retrieval-Augmented Generation) to analyze patch notes, community sentiment, and market context to produce actionable buy/sell signals.
 
-## Documentation
+## Project Status
 
-All project documentation lives in:
+**Current Phase:** Phase 1 — Data Foundation (Steps 1–3 complete)
+
+- ✅ Project structure, dependencies, config
+- ✅ SQLite schema (items, price_snapshots, patch_notes, reddit_posts)
+- ✅ GW2 API price collector (async, batched, with backoff)
+- ⬜ Wiki patch notes collector
+- ⬜ Reddit light poller
+- ⬜ Start continuous collection
+
+## Quick Start
+
+```bash
+# Create virtual environment
+python -m venv venv
+venv\Scripts\activate  # Windows
+
+# Install dependencies
+pip install -e ".[dev]"
+
+# Copy env template and fill in Reddit creds (when needed)
+copy .env.template .env
+
+# Run price collector (one-off + scheduled polling)
+python scripts/run_price_collector.py
+```
+
+## Project Structure
 
 ```
-C:\Obsidian\Main\Guild Wars Project
+GuildWars2Project/
+├── pyproject.toml              # Package config + dependencies
+├── .env.template               # Secrets template
+├── src/gw2trading/
+│   ├── config.py               # Settings (pydantic-settings, loads .env)
+│   ├── collectors/
+│   │   ├── price_collector.py  # Async GW2 API price fetcher
+│   │   └── tracked_items.py    # Item IDs to track (top 20 / top 200)
+│   ├── db/
+│   │   ├── database.py         # SQLite connection + schema management
+│   │   └── schema.sql          # Table definitions
+│   └── utils/
+│       └── logging.py          # Logging config
+├── scripts/
+│   └── run_price_collector.py  # Entry point with APScheduler
+├── tests/
+└── data/                       # SQLite DB lives here (gitignored)
 ```
-
-**Read this first** to understand the architecture, design decisions, risk analysis, and project phases.
 
 ## Tech Stack
 
 - **Python 3.11+**
-- **Ollama** — Local LLM inference (Llama 3 / Mistral)
-- **LangChain** — RAG pipeline orchestration
-- **ChromaDB** — Vector store
-- **Streamlit** — Dashboard
-- **SQLite** — Data storage
+- **httpx** — Async HTTP client for GW2 API
+- **APScheduler** — Timed polling jobs
+- **SQLite** — Data storage (WAL mode)
+- **pydantic-settings** — Configuration management
+- **Ollama** — Local LLM inference (Phase 2)
+- **LangChain + ChromaDB** — RAG pipeline (Phase 2)
+- **Streamlit** — Dashboard (Phase 3)
+
+## Documentation
+
+Detailed architecture, design decisions, and risk analysis:
+```
+C:\Obsidian\Main\Guild Wars Project
+```
 
 ## Attribution
 
