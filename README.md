@@ -4,13 +4,13 @@ An AI-powered trading signal generator for Guild Wars 2's Trading Post. Uses loc
 
 ## Project Status
 
-**Current Phase:** Phase 1 — Data Foundation (Steps 1–3 complete)
+**Current Phase:** Phase 1 — Data Foundation (Steps 1–4 complete, Step 5 pending Reddit API approval)
 
 - ✅ Project structure, dependencies, config
 - ✅ SQLite schema (items, price_snapshots, patch_notes, reddit_posts)
 - ✅ GW2 API price collector (async, batched, with backoff)
-- ⬜ Wiki patch notes collector
-- ⬜ Reddit light poller
+- ✅ Wiki patch notes collector
+- ⏳ Reddit light poller (awaiting API approval)
 - ⬜ Start continuous collection
 
 ## Quick Start
