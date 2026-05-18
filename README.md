@@ -4,14 +4,25 @@ An AI-powered trading signal generator for Guild Wars 2's Trading Post. Uses loc
 
 ## Project Status
 
-**Current Phase:** Phase 1 — Data Foundation ✅ COMPLETE
+**Current Phase:** Phase 2 — LLM / RAG Engine (Steps 1–4 complete)
 
+### Phase 1 — Data Foundation ✅ COMPLETE
 - ✅ Project structure, dependencies, config
 - ✅ SQLite schema (items, price_snapshots, patch_notes, reddit_posts)
 - ✅ GW2 API price collector (async, batched, with backoff)
 - ✅ Wiki patch notes collector
 - ✅ Reddit collector (public JSON endpoint, no auth required)
 - ✅ Unified scheduler + data validation
+
+### Phase 2 — LLM / RAG Engine (In Progress)
+- ✅ Ollama setup + llama3:8b model
+- ✅ Price context module (pandas market analytics)
+- ✅ Document ingestion + chunking pipeline
+- ✅ ChromaDB vector store with local embeddings (nomic-embed-text)
+- ⬜ GW2 knowledge base (static reference docs)
+- ⬜ RAG pipeline (retrieval → prompt → structured output)
+- ⬜ Signal ranking & filtering
+- ⬜ End-to-end testing
 
 ## Quick Start
 

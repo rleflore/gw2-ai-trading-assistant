@@ -18,6 +18,7 @@ env/
 # Database
 *.db
 data/*.db
+data/chromadb/
 
 # IDE
 .vscode/
