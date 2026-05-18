@@ -4,14 +4,14 @@ An AI-powered trading signal generator for Guild Wars 2's Trading Post. Uses loc
 
 ## Project Status
 
-**Current Phase:** Phase 1 — Data Foundation (Steps 1–4 complete, Step 5 pending Reddit API approval)
+**Current Phase:** Phase 1 — Data Foundation ✅ COMPLETE
 
 - ✅ Project structure, dependencies, config
 - ✅ SQLite schema (items, price_snapshots, patch_notes, reddit_posts)
 - ✅ GW2 API price collector (async, batched, with backoff)
 - ✅ Wiki patch notes collector
-- ⏳ Reddit light poller (awaiting API approval)
-- ⬜ Start continuous collection
+- ✅ Reddit collector (public JSON endpoint, no auth required)
+- ✅ Unified scheduler + data validation
 
 ## Quick Start
 
@@ -26,8 +26,11 @@ pip install -e ".[dev]"
 # Copy env template and fill in Reddit creds (when needed)
 copy .env.template .env
 
-# Run price collector (one-off + scheduled polling)
-python scripts/run_price_collector.py
+# Run all collectors (prices + wiki + reddit, scheduled polling)
+python scripts/run_collectors.py
+
+# Validate data health
+python scripts/validate_data.py
 ```
 
 ## Project Structure
@@ -40,6 +43,8 @@ GuildWars2Project/
 │   ├── config.py               # Settings (pydantic-settings, loads .env)
 │   ├── collectors/
 │   │   ├── price_collector.py  # Async GW2 API price fetcher
+│   │   ├── wiki_collector.py   # GW2 Wiki patch notes fetcher
+│   │   ├── reddit_collector.py # Reddit public JSON collector (no auth)
 │   │   └── tracked_items.py    # Item IDs to track (top 20 / top 200)
 │   ├── db/
 │   │   ├── database.py         # SQLite connection + schema management
@@ -47,7 +52,9 @@ GuildWars2Project/
 │   └── utils/
 │       └── logging.py          # Logging config
 ├── scripts/
-│   └── run_price_collector.py  # Entry point with APScheduler
+│   ├── run_collectors.py       # Unified scheduler (all collectors)
+│   ├── run_price_collector.py  # Price-only entry point (legacy)
+│   └── validate_data.py        # Data health check script
 ├── tests/
 └── data/                       # SQLite DB lives here (gitignored)
 ```
