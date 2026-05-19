@@ -11,7 +11,7 @@ CREATE TABLE IF NOT EXISTS items (
     created_at TEXT DEFAULT (datetime('now'))
 );
 
--- Historical price snapshots from /v2/commerce/prices
+-- Historical price snapshots from /v2/commerce/prices (our own collector)
 CREATE TABLE IF NOT EXISTS price_snapshots (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     item_id INTEGER NOT NULL,
@@ -25,6 +25,41 @@ CREATE TABLE IF NOT EXISTS price_snapshots (
 
 CREATE INDEX IF NOT EXISTS idx_price_snapshots_item_time
     ON price_snapshots(item_id, timestamp);
+
+-- Daily aggregated price history from DataWars2 API (backfill + enrichment)
+CREATE TABLE IF NOT EXISTS price_history (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    item_id INTEGER NOT NULL,
+    date TEXT NOT NULL,
+    buy_price_avg INTEGER,
+    buy_price_min INTEGER,
+    buy_price_max INTEGER,
+    buy_price_stdev REAL,
+    sell_price_avg INTEGER,
+    sell_price_min INTEGER,
+    sell_price_max INTEGER,
+    sell_price_stdev REAL,
+    buy_quantity_avg INTEGER,
+    sell_quantity_avg INTEGER,
+    buy_sold INTEGER,
+    sell_sold INTEGER,
+    buy_listed INTEGER,
+    sell_listed INTEGER,
+    buy_delisted INTEGER,
+    sell_delisted INTEGER,
+    buy_value INTEGER,
+    sell_value INTEGER,
+    snapshot_count INTEGER,
+    last_accessed TEXT DEFAULT (datetime('now')),
+    UNIQUE(item_id, date),
+    FOREIGN KEY (item_id) REFERENCES items(item_id)
+);
+
+CREATE INDEX IF NOT EXISTS idx_price_history_item_date
+    ON price_history(item_id, date);
+
+CREATE INDEX IF NOT EXISTS idx_price_history_last_accessed
+    ON price_history(last_accessed);
 
 -- Patch notes from GW2 Wiki (MediaWiki API)
 CREATE TABLE IF NOT EXISTS patch_notes (

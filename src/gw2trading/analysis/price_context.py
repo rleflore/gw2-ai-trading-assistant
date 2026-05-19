@@ -40,34 +40,65 @@ class PriceContext:
 
         
     def _load_price_data(self, item_ids: list[int] | None = None, days: int = 30) -> pd.DataFrame:
-        """Load price snapshots from last N days into a DataFrame.
+        """Load price data from last N days into a DataFrame.
          
-         Columns: item_id, timestamp, buy_price, sell_price, buy_quantity, sell_quantity
-         Also joins item name from items table.
-         """
+        Uses price_snapshots (our collector) for recent granular data,
+        and falls back to price_history (DataWars2 backfill) for older data.
+         
+        Columns: item_id, timestamp, buy_price, sell_price, buy_quantity, sell_quantity, name
+        """
         
         conn = get_connection()
         rows = []
+        cutoff = (datetime.now(timezone.utc) - timedelta(days=days)).isoformat()
+        
         try:
+            # First: our own granular snapshots
             query = """
-                SELECT ps.item_id, ps.timestamp, ps.buy_price, ps.sell_price, ps.buy_quantity, ps.sell_quantity, i.name
+                SELECT ps.item_id, ps.timestamp, ps.buy_price, ps.sell_price, 
+                       ps.buy_quantity, ps.sell_quantity, i.name
                 FROM price_snapshots ps
                 JOIN items i ON ps.item_id = i.item_id
                 WHERE ps.timestamp > ?
             """
-            params = [(datetime.now(timezone.utc) - timedelta(days=days)).isoformat()]
+            params = [cutoff]
             if item_ids:
                 query += " AND ps.item_id IN ({})".format(','.join('?' for _ in item_ids))
                 params.extend(item_ids)
             query += " ORDER BY ps.item_id, ps.timestamp"
             result = conn.execute(query, params)
-            rows = result.fetchall()
+            rows = [dict(r) for r in result.fetchall()]
+
+            # Second: fill gaps with DataWars2 daily history
+            history_query = """
+                SELECT ph.item_id, ph.date || 'T12:00:00' as timestamp, 
+                       ph.buy_price_avg as buy_price, ph.sell_price_avg as sell_price,
+                       ph.buy_quantity_avg as buy_quantity, ph.sell_quantity_avg as sell_quantity,
+                       i.name
+                FROM price_history ph
+                JOIN items i ON ph.item_id = i.item_id
+                WHERE ph.date > ?
+            """
+            history_params = [cutoff[:10]]
+            if item_ids:
+                history_query += " AND ph.item_id IN ({})".format(','.join('?' for _ in item_ids))
+                history_params.extend(item_ids)
+            history_query += " ORDER BY ph.item_id, ph.date"
+            result = conn.execute(history_query, history_params)
+            history_rows = [dict(r) for r in result.fetchall()]
+            rows.extend(history_rows)
+
         except Exception as e:
             logger.error("Error loading price data: %s", e)
         finally:
             conn.close()
+
         df = pd.DataFrame(rows, columns=["item_id", "timestamp", "buy_price", "sell_price", "buy_quantity", "sell_quantity", "name"])
         df["timestamp"] = pd.to_datetime(df["timestamp"])
+        # Deduplicate: if we have both snapshot and history for same item+day, prefer snapshot
+        df = df.sort_values(["item_id", "timestamp"]).drop_duplicates(
+            subset=["item_id", "timestamp"], keep="first"
+        )
         return df
 
 

@@ -2,13 +2,18 @@
 
 Loads patch notes and Reddit posts from SQLite, chunks them into
 embeddable documents with metadata, and prepares them for the vector store.
+Also handles static knowledge base documents from data/knowledge_base/.
 """
 
 import logging
 from datetime import datetime
 from dataclasses import dataclass, field
+from pathlib import Path
 
+from gw2trading.config import DATA_DIR
 from gw2trading.db.database import get_connection
+
+KNOWLEDGE_BASE_DIR = DATA_DIR / "knowledge_base"
 
 logger = logging.getLogger("gw2trading.rag.ingestion")
 
@@ -34,12 +39,23 @@ class DocumentIngester:
         
         patch_notes = self._load_patch_notes(since)
         reddit_posts = self._load_reddit_posts(since)
+        knowledge_docs = self._load_knowledge_base()
         documents = []
         for note in patch_notes:
             documents.extend(self._chunk_patch_note(note))
         for post in reddit_posts:
             documents.extend(self._chunk_reddit_post(post))
+        for kb_doc in knowledge_docs:
+            documents.extend(self._chunk_knowledge_doc(kb_doc))
 
+        return documents
+
+    def ingest_knowledge_base(self) -> list[Document]:
+        """Load and chunk only the static knowledge base documents."""
+        knowledge_docs = self._load_knowledge_base()
+        documents = []
+        for kb_doc in knowledge_docs:
+            documents.extend(self._chunk_knowledge_doc(kb_doc))
         return documents
         
 
@@ -138,6 +154,69 @@ class DocumentIngester:
         
         
         
+
+    def _load_knowledge_base(self) -> list[dict]:
+        """Load markdown files from the knowledge_base directory.
+
+        Returns list of dicts with keys: filename, title, content
+        """
+        results = []
+        if not KNOWLEDGE_BASE_DIR.exists():
+            logger.warning(f"Knowledge base directory not found: {KNOWLEDGE_BASE_DIR}")
+            return results
+
+        for md_file in sorted(KNOWLEDGE_BASE_DIR.glob("*.md")):
+            content = md_file.read_text(encoding="utf-8")
+            title = content.split("\n", 1)[0].lstrip("# ").strip() if content else md_file.stem
+            results.append({
+                "filename": md_file.name,
+                "title": title,
+                "content": content,
+            })
+            logger.debug(f"Loaded knowledge base file: {md_file.name}")
+
+        return results
+
+    def _chunk_knowledge_doc(self, doc: dict) -> list[Document]:
+        """Chunk a knowledge base markdown file into Documents.
+
+        Splits on H2 headers (## ) to keep each section as a coherent chunk.
+        """
+        metadata = {
+            "source_type": "knowledge_base",
+            "date": "static",
+            "title": doc["title"],
+            "source_url": f"local://{doc['filename']}",
+        }
+
+        sections = self._split_by_headers(doc["content"])
+        documents = []
+        for section in sections:
+            if self._estimate_tokens(section) <= self.chunk_size:
+                documents.append(Document(text=section, metadata=metadata.copy()))
+            else:
+                chunks = self._split_text(section)
+                for chunk in chunks:
+                    documents.append(Document(text=chunk, metadata=metadata.copy()))
+        return documents
+
+    def _split_by_headers(self, text: str) -> list[str]:
+        """Split markdown text by H2 headers (##), keeping the header with its content."""
+        lines = text.split("\n")
+        sections = []
+        current_section = []
+
+        for line in lines:
+            if line.startswith("## ") and current_section:
+                sections.append("\n".join(current_section).strip())
+                current_section = [line]
+            else:
+                current_section.append(line)
+
+        if current_section:
+            sections.append("\n".join(current_section).strip())
+
+        return [s for s in sections if s]
 
     def _split_text(self, text: str) -> list[str]:
         """Split text into chunks of approximately chunk_size tokens with overlap."""
