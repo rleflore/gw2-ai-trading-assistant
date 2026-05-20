@@ -2,28 +2,25 @@
 
 An AI-powered trading signal generator for Guild Wars 2's Trading Post. Uses local LLMs with RAG (Retrieval-Augmented Generation) to analyze patch notes, community sentiment, and market context to produce actionable buy/sell signals.
 
+**Portfolio project demonstrating:** Applied AI Engineering (RAG pipelines, structured output parsing, prompt engineering), data engineering (async collectors, scheduling, ETL), and full-stack development (Streamlit dashboard, desktop overlay).
+
+## Features
+
+- **RAG Pipeline** — Retrieves relevant docs from vector store, builds context-rich prompts, and generates structured trading signals via local LLM
+- **Automated Data Collection** — Prices (GW2 API), patch notes (Wiki), community posts (Reddit), all on scheduled intervals
+- **Signal Accuracy Tracking** — Validates predictions against actual price movements, tracks model accuracy over time
+- **Interactive Dashboard** — Market overview with charts, active signals, signal history, patch analysis, and community buzz
+- **Desktop Overlay** — Transparent always-on-top HUD that appears when Guild Wars 2 launches, showing active signals in-game
+- **Confidence Calibration** — Multi-source agreement scoring, strict thresholds (≥75% confidence, ≥20% expected move) to minimize false signals
+
 ## Project Status
 
-**Current Phase:** Phase 2 — LLM / RAG Engine (Steps 1–4 complete)
-
-### Phase 1 — Data Foundation ✅ COMPLETE
-- ✅ Project structure, dependencies, config
-- ✅ SQLite schema (items, price_snapshots, price_history, patch_notes, reddit_posts)
-- ✅ GW2 API price collector (async, batched, with backoff)
-- ✅ Wiki patch notes collector
-- ✅ Reddit collector (public JSON endpoint, no auth required)
-- ✅ Unified scheduler + data validation
-- ✅ DataWars2 historical backfill (daily aggregates, full item catalog, retention policy)
-
-### Phase 2 — LLM / RAG Engine (In Progress)
-- ✅ Ollama setup + llama3:8b model
-- ✅ Price context module (pandas market analytics)
-- ✅ Document ingestion + chunking pipeline
-- ✅ ChromaDB vector store with local embeddings (nomic-embed-text)
-- ✅ GW2 knowledge base (static reference docs)
-- ⬜ RAG pipeline (retrieval → prompt → structured output)
-- ⬜ Signal ranking & filtering
-- ⬜ End-to-end testing
+| Phase | Status |
+|-------|--------|
+| Phase 1 — Data Foundation | ✅ Complete |
+| Phase 2 — LLM / RAG Engine | ✅ Complete |
+| Phase 3 — Dashboard & Overlay | ✅ Complete |
+| Phase 4 — Deployment & Polish | 🔄 In Progress |
 
 ## Quick Start
 
@@ -38,11 +35,51 @@ pip install -e ".[dev]"
 # Copy env template and fill in Reddit creds (when needed)
 copy .env.template .env
 
-# Run all collectors (prices + wiki + reddit, scheduled polling)
+# Start Ollama and pull required models
+ollama pull llama3:8b
+ollama pull nomic-embed-text
+
+# Ingest knowledge base into vector store
+python scripts/ingest_knowledge_base.py
+
+# Run all collectors (prices + wiki + reddit + daily RAG pipeline + accuracy checks)
 python scripts/run_collectors.py
+
+# Launch the dashboard
+streamlit run scripts/run_dashboard.py
 
 # Validate data health
 python scripts/validate_data.py
+```
+
+## Architecture
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                     DATA COLLECTION                          │
+│  GW2 API (15min/1hr) │ Wiki (1hr) │ Reddit (1hr)           │
+└────────────┬──────────────┬──────────────┬──────────────────┘
+             │              │              │
+             ▼              ▼              ▼
+┌─────────────────────────────────────────────────────────────┐
+│                      STORAGE LAYER                           │
+│  SQLite (prices, patches, posts, signals)                   │
+│  ChromaDB (embeddings for RAG retrieval)                    │
+└────────────┬────────────────────────────────┬───────────────┘
+             │                                │
+             ▼                                ▼
+┌──────────────────────────┐    ┌─────────────────────────────┐
+│     RAG PIPELINE         │    │     SIGNAL VALIDATION       │
+│  Retrieve → Prompt →     │    │  Check expired signals vs   │
+│  LLM (llama3:8b) →      │    │  actual price movements     │
+│  Parse → Rank → Store    │    │  (daily at 11 AM)           │
+└────────────┬─────────────┘    └─────────────────────────────┘
+             │
+             ▼
+┌─────────────────────────────────────────────────────────────┐
+│                      OUTPUT LAYER                            │
+│  Streamlit Dashboard │ Desktop Overlay (tkinter HUD)        │
+└─────────────────────────────────────────────────────────────┘
 ```
 
 ## Project Structure
@@ -56,54 +93,80 @@ GuildWars2Project/
 │   ├── collectors/
 │   │   ├── price_collector.py  # Async GW2 API price fetcher
 │   │   ├── wiki_collector.py   # GW2 Wiki patch notes fetcher
-│   │   ├── reddit_collector.py # Reddit public JSON collector (no auth)
-│   │   ├── datawars2_collector.py # DataWars2 historical price backfill
+│   │   ├── reddit_collector.py # Reddit public JSON collector
+│   │   ├── datawars2_collector.py # Historical price backfill
 │   │   └── tracked_items.py    # Item IDs to track (top 20 / top 200)
 │   ├── analysis/
-│   │   └── price_context.py    # Market analytics (pandas, merges snapshots + history)
+│   │   ├── price_context.py    # Market analytics (pandas)
+│   │   ├── signal_ranker.py    # Signal filtering, ranking & DB storage
+│   │   └── accuracy_tracker.py # Validates predictions vs actual outcomes
 │   ├── db/
 │   │   ├── database.py         # SQLite connection + schema management
 │   │   └── schema.sql          # Table definitions
 │   ├── rag/
-│   │   ├── ingestion.py        # Document chunking (patch notes, reddit, knowledge base)
-│   │   └── vectorstore.py      # ChromaDB wrapper with local embeddings
+│   │   ├── ingestion.py        # Document chunking
+│   │   ├── vectorstore.py      # ChromaDB wrapper (nomic-embed-text)
+│   │   ├── models.py           # Pydantic schemas (TradingSignal, PipelineOutput)
+│   │   ├── prompts.py          # Prompt templates with confidence calibration
+│   │   └── pipeline.py         # RAG orchestration
+│   ├── dashboard/
+│   │   ├── app.py              # Streamlit main app + navigation
+│   │   └── views/
+│   │       ├── market.py       # Market overview (prices, charts)
+│   │       ├── signals.py      # Trading signals + accuracy stats + community buzz
+│   │       └── patches.py      # Patch analysis (market-relevant only)
 │   └── utils/
 │       └── logging.py          # Logging config
 ├── scripts/
-│   ├── run_collectors.py       # Unified scheduler (all collectors)
-│   ├── backfill_history.py     # DataWars2 historical backfill + catalog + cleanup
+│   ├── run_collectors.py       # Unified scheduler (collectors + RAG + accuracy)
+│   ├── run_pipeline.py         # Manual RAG pipeline trigger
+│   ├── run_dashboard.py        # Streamlit entry point
+│   ├── signal_overlay.py       # Desktop overlay (transparent HUD)
+│   ├── watch_gw2.pyw          # GW2 process watcher (launches overlay)
+│   ├── backfill_history.py     # Historical backfill + cleanup
 │   ├── ingest_knowledge_base.py # Embed knowledge base into ChromaDB
-│   ├── run_price_collector.py  # Price-only entry point (legacy)
-│   └── validate_data.py        # Data health check script
+│   └── validate_data.py        # Data health check
 ├── data/
 │   ├── knowledge_base/         # Static GW2 reference docs for RAG
-│   │   ├── economy_rules.md
-│   │   ├── item_relationships.md
-│   │   ├── historical_impacts.md
-│   │   └── item_categories.md
 │   ├── chromadb/               # Vector store (gitignored)
 │   └── gw2trading.db           # SQLite DB (gitignored)
-├── tests/
-└── venv/
+└── tests/
 ```
 
 ## Tech Stack
 
-- **Python 3.11+**
-- **httpx** — Async HTTP client for GW2 API
-- **APScheduler** — Timed polling jobs
-- **SQLite** — Data storage (WAL mode)
-- **pydantic-settings** — Configuration management
-- **Ollama** — Local LLM inference (Phase 2)
-- **LangChain + ChromaDB** — RAG pipeline (Phase 2)
-- **Streamlit** — Dashboard (Phase 3)
+| Category | Technology |
+|----------|-----------|
+| Language | Python 3.11+ |
+| LLM | Ollama (llama3:8b, local inference) |
+| Embeddings | nomic-embed-text (768-dim, local) |
+| Vector Store | ChromaDB |
+| Database | SQLite (WAL mode) |
+| HTTP | httpx (async) |
+| Scheduling | APScheduler |
+| Validation | Pydantic v2 |
+| Dashboard | Streamlit + Plotly |
+| Desktop Overlay | tkinter |
+| Config | pydantic-settings |
 
-## Documentation
+## Key Design Decisions
 
-Detailed architecture, design decisions, and risk analysis:
-```
-C:\Obsidian\Main\Guild Wars Project
-```
+- **Local-first** — All inference runs locally via Ollama. No API keys, no cloud costs, no rate limits.
+- **Conservative signals** — High confidence threshold (≥75%) and minimum expected move (≥20%) to reduce false positives. The model is told to produce zero signals when uncertain.
+- **Automated validation** — Signals are automatically checked against actual price data after their time horizon expires. This creates a feedback loop for measuring model quality.
+- **Market relevance filtering** — Patch notes are filtered by keyword before triggering the pipeline. Non-market patches trigger a generic "daily scan" instead.
+- **Tax-aware** — The 15% TP tax is baked into the prompt and the ranker threshold, so signals only fire for moves large enough to be profitable.
+
+## Scheduled Jobs
+
+| Job | Schedule | Description |
+|-----|----------|-------------|
+| Top 20 prices | Every 15 min | High-frequency tracking of most traded items |
+| Top 200 prices | Every 1 hour | Broader market coverage |
+| Wiki patch notes | Every 1 hour | Detect new game updates |
+| Reddit posts | Every 1 hour | Community sentiment |
+| RAG pipeline | Daily 10 AM | Generate trading signals |
+| Accuracy check | Daily 11 AM | Validate expired signals |
 
 ## Attribution
 

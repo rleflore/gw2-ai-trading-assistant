@@ -94,7 +94,7 @@ class PriceContext:
             conn.close()
 
         df = pd.DataFrame(rows, columns=["item_id", "timestamp", "buy_price", "sell_price", "buy_quantity", "sell_quantity", "name"])
-        df["timestamp"] = pd.to_datetime(df["timestamp"])
+        df["timestamp"] = pd.to_datetime(df["timestamp"], format="mixed", utc=True)
         # Deduplicate: if we have both snapshot and history for same item+day, prefer snapshot
         df = df.sort_values(["item_id", "timestamp"]).drop_duplicates(
             subset=["item_id", "timestamp"], keep="first"
