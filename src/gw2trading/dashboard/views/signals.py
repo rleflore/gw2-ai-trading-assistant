@@ -49,7 +49,7 @@ def _render_accuracy_stats():
         return
 
     st.markdown(
-        f'<div style="text-align: right; font-size: 0.9em;">'
+        f'<div style="text-align: right; font-size: 1.4em;">'
         f'<strong>Model Accuracy: {stats["accuracy_pct"]:.0f}%</strong></div>',
         unsafe_allow_html=True,
     )
