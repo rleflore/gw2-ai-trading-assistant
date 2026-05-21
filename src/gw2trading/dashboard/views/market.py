@@ -33,7 +33,7 @@ def render():
     with col3:
         latest = df["timestamp"].max()
         if pd.notna(latest):
-            local_time = latest.strftime("%Y-%m-%d")
+            local_time = latest.strftime("%Y-%m-%d %H:%M")
         else:
             local_time = "—"
         st.metric("Last Update", local_time)
