@@ -45,21 +45,24 @@ def _render_accuracy_stats():
     tracker = AccuracyTracker()
     stats = tracker.get_accuracy_stats()
 
-    if stats["total"] == 0:
-        return
-
     # Get the most recent validation date
     conn = get_connection()
     last_validated = conn.execute(
         "SELECT MAX(validated_at) FROM signals WHERE validated_at IS NOT NULL"
     ).fetchone()[0]
     conn.close()
-    last_date = last_validated[:10] if last_validated else "—"
+
+    if stats["total"] == 0:
+        accuracy_display = "—"
+        last_date = "—"
+    else:
+        accuracy_display = f'{stats["accuracy_pct"]:.0f}%'
+        last_date = last_validated[:10] if last_validated else "—"
 
     st.markdown(
         f'<div style="position: absolute; right: 12rem; top: -2.7rem; text-align: center; z-index: 999;">'
         f'<div style="font-size: 1.2em; font-weight: bold;">Model Accuracy</div>'
-        f'<div style="font-size: 1.5em;">{stats["accuracy_pct"]:.0f}%</div>'
+        f'<div style="font-size: 1.5em;">{accuracy_display}</div>'
         f'<div style="font-size: 0.8em; color: gray;">Last updated: {last_date}</div>'
         f'</div>',
         unsafe_allow_html=True,
