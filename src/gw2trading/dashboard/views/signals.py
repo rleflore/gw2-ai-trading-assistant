@@ -20,11 +20,12 @@ MARKET_ITEM_KEYWORDS = [
 def render():
     st.title("Trading Signals")
     st.markdown(
-        '<p style="font-size: 0.85em; color: rgba(49,51,63,0.6);">'
-        "AI-generated buy/sell signals from the RAG pipeline.<br>"
-        "Signals require ≥75% confidence and ≥20% expected move (after 15% TP tax) to appear.</p>",
+        '<p style="font-size: 0.9em; color: #FAF9F6;">'
+        "AI-generated trading recommendations from the RAG pipeline.<br>"
+        "These signals are based on real-time market data and community sentiment.</p>",
         unsafe_allow_html=True,
     )
+
 
     _render_accuracy_stats()
 
@@ -39,23 +40,6 @@ def render():
         _render_signal_history()
 
 
-def _render_accuracy_stats():
-    """Show model accuracy summary at top of page."""
-    tracker = AccuracyTracker()
-    stats = tracker.get_accuracy_stats()
-
-    if stats["total"] == 0:
-        return
-
-    col1, col2, col3 = st.columns(3)
-    with col1:
-        st.metric("Model Accuracy", f"{stats['accuracy_pct']:.0f}%")
-    with col2:
-        st.metric("Correct Signals", stats["correct"])
-    with col3:
-        st.metric("Total Validated", stats["total"])
-    st.markdown("---")
-
 def _render_active_signals():
     """Show currently active signals as cards."""
     conn = get_connection()
@@ -69,17 +53,7 @@ def _render_active_signals():
     conn.close()
 
     if not rows:
-        conn2 = get_connection()
-        last_run = conn2.execute(
-            "SELECT MAX(timestamp) FROM signals"
-        ).fetchone()[0]
-        conn2.close()
-
-        if last_run:
-            last_date = last_run[:10]
-            st.info(f"No active signals. (Last signal: {last_date})")
-        else:
-            st.info("No signals generated today.")
+        st.info("No active signals. The pipeline runs daily at 10 AM.")
         return
 
     st.markdown(f"**{len(rows)} active signal(s)**")
@@ -129,10 +103,7 @@ def _render_signal_history():
     conn.close()
 
     if not rows:
-        st.info(
-            "No signal history yet. The pipeline applies strict filters — signals require "
-            "≥75% confidence and ≥20% expected price move to be recorded."
-        )
+        st.info("No signal history yet.")
         return
 
     df = pd.DataFrame(rows, columns=[
