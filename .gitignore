@@ -16,9 +16,8 @@ env/
 .env
 
 # Database
-*.db
-data/*.db
 data/chromadb/
+# Note: data/gw2trading.db is tracked as a demo snapshot for Streamlit Cloud
 
 # IDE
 .vscode/
