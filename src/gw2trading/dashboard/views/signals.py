@@ -57,7 +57,7 @@ def _render_accuracy_stats():
     last_date = last_validated[:10] if last_validated else "—"
 
     st.markdown(
-        f'<div style="display: flex; justify-content: flex-end; align-items: center; margin-bottom: -3rem;">'
+        f'<div style="display: flex; justify-content: flex-end; align-items: center; margin-bottom: -1rem;">'
         f'<div style="text-align: center;">'
         f'<div style="font-size: 1.2em; font-weight: bold;">Model Accuracy</div>'
         f'<div style="font-size: 1.5em;">{stats["accuracy_pct"]:.0f}%</div>'
