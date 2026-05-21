@@ -19,7 +19,7 @@ MARKET_ITEM_KEYWORDS = [
 
 def render():
     st.title("Trading Signals")
-    st.caption("AI-generated trading recommendations from the RAG pipeline")
+    st.caption("AI-generated buy/sell signals from the RAG pipeline. Signals require ≥75% confidence and ≥20% expected move (after 15% TP tax) to appear.")
 
     _render_accuracy_stats()
 

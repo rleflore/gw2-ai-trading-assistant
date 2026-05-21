@@ -10,7 +10,7 @@ from gw2trading.db.database import get_connection
 
 def render():
     st.title("Market Overview")
-    st.caption("Live prices and trends for tracked items")
+    st.caption("Real-time price tracking for GW2 Trading Post items. Shows 24h/7d price changes, volume trends, and flags anomalies (>20% moves).")
 
     df = _load_market_data()
 

@@ -8,7 +8,7 @@ from gw2trading.db.database import get_connection
 
 def render():
     st.title("Patch Analysis")
-    st.caption("Recent Guild Wars 2 patch notes with AI-generated impact analysis")
+    st.caption("Monitors GW2 patch notes for economy-impacting changes. Only patches affecting crafting, materials, or drop rates trigger AI analysis.")
 
     conn = get_connection()
     rows = conn.execute(
