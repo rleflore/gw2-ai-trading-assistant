@@ -31,8 +31,7 @@ def render():
         anomalies = df[df["change_24h"].abs() > 20]
         st.metric("Anomalies (>20% 24h)", len(anomalies))
     with col3:
-        latest = df["timestamp"].max()
-        st.metric("Last Update", latest.strftime("%H:%M") if pd.notna(latest) else "—")
+        st.metric("Last Update", datetime.now(timezone.utc).strftime("%H:%M"))
 
     st.markdown("---")
 
