@@ -159,6 +159,14 @@ GuildWars2Project/
 | RAG pipeline | Daily 10 AM | Generate trading signals |
 | Accuracy check | Daily 11 AM | Validate expired signals |
 
+## Deployment
+
+- **Live Demo:** Hosted on [Streamlit Cloud](https://gw2-ai-trading-assistant.streamlit.app/) with a pre-collected data snapshot
+- **Local System:** Runs fully automated — collectors, RAG pipeline, and desktop overlay operate 24/7 on the local machine
+- **Updating the demo:** Push a fresh DB snapshot (`git add data/gw2trading.db && git commit && git push`) whenever you want the live site to reflect new data
+
+> **Note:** Streamlit Cloud cannot run Ollama, so the hosted dashboard displays pre-computed signals. The local system generates live signals via the full RAG pipeline.
+
 ## Attribution
 
 This project uses the Guild Wars 2 API, provided by ArenaNet.
