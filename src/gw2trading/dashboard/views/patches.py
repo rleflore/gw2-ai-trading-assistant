@@ -8,7 +8,12 @@ from gw2trading.db.database import get_connection
 
 def render():
     st.title("Patch Analysis")
-    st.caption("Monitors GW2 patch notes for economy-impacting changes. Only patches affecting crafting, materials, or drop rates trigger AI analysis.")
+    st.markdown(
+        '<p style="font-size: 0.85em; color: rgba(49,51,63,0.6);">'
+        "Monitors GW2 patch notes for economy-impacting changes.<br>"
+        "Only patches affecting crafting, materials, or drop rates trigger AI analysis.</p>",
+        unsafe_allow_html=True,
+    )
 
     conn = get_connection()
     rows = conn.execute(
