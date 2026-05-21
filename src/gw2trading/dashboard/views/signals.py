@@ -26,7 +26,7 @@ def render():
         unsafe_allow_html=True,
     )
 
-    # Accuracy stat and tabs on the same row
+    # Accuracy stat right-aligned above tabs
     _render_accuracy_stats()
 
     # Tabs for active vs history
@@ -57,12 +57,11 @@ def _render_accuracy_stats():
     last_date = last_validated[:10] if last_validated else "—"
 
     st.markdown(
-        f'<div style="display: flex; justify-content: flex-end; align-items: center; margin-bottom: -3rem;">'
-        f'<div style="text-align: center;">'
+        f'<div style="position: absolute; right: 12rem; top: -3rem; text-align: center; z-index: 999;">'
         f'<div style="font-size: 1.2em; font-weight: bold;">Model Accuracy</div>'
         f'<div style="font-size: 1.5em;">{stats["accuracy_pct"]:.0f}%</div>'
         f'<div style="font-size: 0.8em; color: gray;">Last updated: {last_date}</div>'
-        f'</div></div>',
+        f'</div>',
         unsafe_allow_html=True,
     )
 
