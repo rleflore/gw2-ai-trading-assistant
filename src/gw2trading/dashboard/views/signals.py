@@ -26,11 +26,12 @@ def render():
         unsafe_allow_html=True,
     )
 
-
-    _render_accuracy_stats()
-
-    # Tabs for active vs history
-    tab_active, tab_history = st.tabs(["Active Signals", "Signal History"])
+    # Tabs with accuracy stat aligned to the right
+    col_tabs, col_accuracy = st.columns([4, 1])
+    with col_accuracy:
+        _render_accuracy_stats()
+    with col_tabs:
+        tab_active, tab_history = st.tabs(["Active Signals", "Signal History"])
 
     with tab_active:
         _render_active_signals()
@@ -49,7 +50,6 @@ def _render_accuracy_stats():
         return
 
     st.metric("Model Accuracy", f"{stats['accuracy_pct']:.0f}%")
-    st.markdown("---")
 
 
 def _render_active_signals():
