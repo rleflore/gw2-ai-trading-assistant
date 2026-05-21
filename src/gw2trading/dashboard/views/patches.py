@@ -51,11 +51,7 @@ def render():
     relevant_rows = [row for row in rows if row[0] in signals_by_date]
 
     if not relevant_rows:
-        st.info(
-            "No market-relevant patch notes detected. Only patches that affect crafting, "
-            "materials, drop rates, or economy systems appear here. "
-            f"{len(rows)} patch note(s) collected but none triggered trading signals."
-        )
+        st.info(f"No market-relevant patches detected. ({len(rows)} patch note(s) collected)")
         return
 
     st.markdown(f"**{len(relevant_rows)} market-relevant patch note(s)**")
