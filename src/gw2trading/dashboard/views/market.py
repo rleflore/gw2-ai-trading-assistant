@@ -4,6 +4,7 @@ import streamlit as st
 import pandas as pd
 import plotly.express as px
 from datetime import datetime, timezone, timedelta
+from zoneinfo import ZoneInfo
 
 from gw2trading.db.database import get_connection
 
@@ -33,9 +34,10 @@ def render():
     with col3:
         latest = df["timestamp"].max()
         if pd.notna(latest):
-            time_str = latest.strftime("%H:%M")
-            date_str = latest.strftime("%Y-%m-%d")
-            st.metric("Last Update", time_str)
+            local_ts = latest.tz_convert(ZoneInfo("America/New_York"))
+            time_str = local_ts.strftime("%H:%M")
+            date_str = local_ts.strftime("%Y-%m-%d")
+            st.metric("Last Update (ET)", time_str)
             st.caption(date_str)
         else:
             st.metric("Last Update", "—")
