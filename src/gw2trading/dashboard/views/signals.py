@@ -64,7 +64,26 @@ def _render_active_signals():
     conn.close()
 
     if not rows:
-        st.info("No active signals. The pipeline runs daily at 10 AM.")
+        # Check if pipeline has ever run (look for any signals, even filtered ones)
+        conn2 = get_connection()
+        total_signals = conn2.execute("SELECT COUNT(*) FROM signals").fetchone()[0]
+        last_run = conn2.execute(
+            "SELECT MAX(timestamp) FROM signals"
+        ).fetchone()[0]
+        conn2.close()
+
+        if total_signals > 0:
+            st.info(
+                f"No active signals. Last pipeline run: {last_run}. "
+                "All signals have expired or been validated."
+            )
+        else:
+            st.info(
+                "📊 No signals generated yet. The pipeline runs daily at 10 AM and only "
+                "produces signals when there is strong multi-source evidence (≥75% confidence, "
+                "≥20% expected move after 15% TP tax). This is by design — no signal is better "
+                "than a bad signal."
+            )
         return
 
     st.markdown(f"**{len(rows)} active signal(s)**")
@@ -114,7 +133,10 @@ def _render_signal_history():
     conn.close()
 
     if not rows:
-        st.info("No signal history yet.")
+        st.info(
+            "No signal history yet. The pipeline applies strict filters — signals require "
+            "≥75% confidence and ≥20% expected price move to be recorded."
+        )
         return
 
     df = pd.DataFrame(rows, columns=[
