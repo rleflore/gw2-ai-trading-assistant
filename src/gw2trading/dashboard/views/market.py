@@ -33,10 +33,12 @@ def render():
     with col3:
         latest = df["timestamp"].max()
         if pd.notna(latest):
-            local_time = latest.strftime("%Y-%m-%d %H:%M")
+            time_str = latest.strftime("%H:%M")
+            date_str = latest.strftime("%Y-%m-%d")
+            st.metric("Last Update", time_str)
+            st.caption(date_str)
         else:
-            local_time = "—"
-        st.metric("Last Update", local_time)
+            st.metric("Last Update", "—")
 
     st.markdown("---")
 
