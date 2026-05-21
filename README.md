@@ -13,15 +13,6 @@ An AI-powered trading signal generator for Guild Wars 2's Trading Post. Uses loc
 - **Desktop Overlay** — Transparent always-on-top HUD that appears when Guild Wars 2 launches, showing active signals in-game
 - **Confidence Calibration** — Multi-source agreement scoring, strict thresholds (≥75% confidence, ≥20% expected move) to minimize false signals
 
-## Project Status
-
-| Phase | Status |
-|-------|--------|
-| Phase 1 — Data Foundation | ✅ Complete |
-| Phase 2 — LLM / RAG Engine | ✅ Complete |
-| Phase 3 — Dashboard & Overlay | ✅ Complete |
-| Phase 4 — Deployment & Polish | 🔄 In Progress |
-
 ## Quick Start
 
 ```bash
