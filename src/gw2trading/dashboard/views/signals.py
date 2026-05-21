@@ -40,6 +40,24 @@ def render():
         _render_signal_history()
 
 
+def _render_accuracy_stats():
+    """Show model accuracy summary at top of page."""
+    tracker = AccuracyTracker()
+    stats = tracker.get_accuracy_stats()
+
+    if stats["total"] == 0:
+        return
+
+    col1, col2, col3 = st.columns(3)
+    with col1:
+        st.metric("Model Accuracy", f"{stats['accuracy_pct']:.0f}%")
+    with col2:
+        st.metric("Correct Signals", stats["correct"])
+    with col3:
+        st.metric("Total Validated", stats["total"])
+    st.markdown("---")
+
+
 def _render_active_signals():
     """Show currently active signals as cards."""
     conn = get_connection()
